@@ -43,10 +43,45 @@ regd_users.post("/login", (req,res) => {
       }
 });
 
-// Add a book review
+// Add/update a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    const isbn = req.params.isbn;
+    const review = req.query.review;
+    const book = books[isbn];
+  
+    if (!book) {
+      res.status(404).send("Book not found");
+      return;
+    }
+  
+    const bookReviews = book.reviews || {};
+    const username = req.session.authorization.username;
+
+    // Update or add the review for the specified username
+    bookReviews[username] = review;
+
+    res.status(200).send({"message":`The review for the book with ISBN ${isbn} has been added/updated`, bookReviews});
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn;
+    const book = books[isbn];
+
+    if (!book) {
+        res.status(404).send("Book not found");
+        return;
+    }
+    
+    const bookReviews = book.reviews || {};
+    const username = req.session.authorization.username;
+
+    if(bookReviews[username]){
+        delete bookReviews[username];
+        return res.status(200).send({"message":`The review for the book with ISBN ${isbn} has been deleted`, bookReviews});
+    }
+    else{
+        return res.status(404).send("No reviews found");
+    }
 });
 
 module.exports.authenticated = regd_users;
